@@ -1,0 +1,160 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2638
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica-Bold;\f1\fswiss\fcharset0 Helvetica;\f2\fnil\fcharset0 Menlo-Regular;
+\f3\fnil\fcharset0 Menlo-Bold;}
+{\colortbl;\red255\green255\blue255;\red12\green95\blue24;\red49\green49\blue49;\red19\green112\blue166;
+\red12\green95\blue24;\red49\green49\blue49;\red19\green112\blue166;\red0\green0\blue0;\red49\green49\blue49;
+\red49\green49\blue49;\red83\green83\blue83;}
+{\*\expandedcolortbl;;\cssrgb\c0\c43922\c12549;\cssrgb\c25098\c25098\c25098;\cssrgb\c5490\c51765\c70980;
+\cssrgb\c0\c43922\c12549;\cssrgb\c25098\c25098\c25098;\cssrgb\c5490\c51765\c70980;\cssrgb\c0\c0\c0;\cssrgb\c25126\c25126\c25094;
+\cssrgb\c25126\c25126\c25094;\cssrgb\c40000\c40000\c40000;}
+\margl1440\margr1440\vieww16180\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b\fs32 \cf0 How to Run Simulation / Extract exchange fluxes from ComPy Models\
+
+\f1\b0\fs24 By Izzy Goodchild-Michelman 2022\
+Igoodchildmichelman@college.harvard.edu\
+\
+The output of ComPy models can be used with {\field{\*\fldinst{HYPERLINK "https://cobrapy.readthedocs.io/en/latest/"}}{\fldrslt CobraPy}} or {\field{\*\fldinst{HYPERLINK "https://opencobra.github.io/cobratoolbox/stable/installation.html"}}{\fldrslt CobraToolbox}} for simulations in the same way that a normal single species model would. The instructions below are for CobraPy (python) but there are comparable functions in Cobratoolbox (matlab). \
+\
+\
+\
+\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b\fs32 \cf0 Reaction Types and Diets in ComPy Models:\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b0\fs24 \cf0 In ComPy models, microbes are connected with a lumen compartment [u]. Diet is simulated by metabolites in the diet compartment [d] which is also connected to the lumen. transport is non reversible from [d] to [u]. Secretion goes through the fecal compartment [fe], transporters are non reversible from [u] to [fe].\
+\
+Diet exchange: 
+\f0\b 'EX_met[d]': 'met[d] <=>\'92
+\f1\b0 \
+Diet transporter: 
+\f0\b 'DUt_met': 'met[d] -> met[u]'
+\f1\b0 \
+Microbe uptake/secretion: 
+\f0\b 'Microbe_IEX_met[c]tr': 'Microbe_met[c] <=> met[u]'
+\f1\b0 \
+Fecal transporter: 
+\f0\b 'UFEt_met': 'met[u] -> met[fe]'
+\f1\b0 \
+Fecal exchanges: '
+\f0\b EX_met[fe]': 'met[fe] <=>'
+\f1\b0 \
+\
+**To simulate a metabolite as part of a diet you need to change the lower bound of that metabolite\'92s diet exchange reaction to the flux value you want.  For example, if you had a list of the metabolites you wanted to be in your diet as \'93
+\f2 list_of_metabolites_in_diet\'94
+\f1 , making sure each entry in list is a string of  VMH metabolite id + \'93[d]\'94 :\
+
+\f2 \
+list_of_metabolites_in_diet  = [EX_fru[d]    ,-0.14899\
+EX_glc_D[d]    ,-0.14899\
+EX_gal[d]    ,-0.14899\
+EX_man[d]    ,-0.14899\
+EX_mnl[d]    ,-0.14899\
+EX_fuc_L[d]    ,-0.14899\
+EX_glcn[d]    ,-0.14899]\
+
+\f1 \
+\
+
+\f2 for reac in [i.id for i in compy_model.reactions if "EX_" and "[d]" in i.id]:\
+	if reac in list_of_metabolites_in_diet:\
+		compy_model.reactions.get_by_id(reac).lower_bound = float(diet_dic[reac])\
+          print("metabolite " + str(reac) + "has been added to diet!")\
+     else:\
+          compy_model.reactions.get_by_id(reac).lower_bound = 0
+\f1 \
+\
+\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \
+\
+\
+
+\f0\b\fs32 Model file type:\
+
+\f1\b0\fs24 ComPy will output the microbiome level models as .json files, these can be imported to CobraPy using:\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f3\b \cf2 \expnd0\expndtw0\kerning0
+import
+\f2\b0 \cf3  
+\f3\b \cf4 cobra\cf5 \outl0\strokewidth0 \strokec5 \
+\pard\pardeftab720\partightenfactor0
+\cf5 from
+\f2\b0 \cf6 \strokec6  
+\f3\b \cf7 \strokec7 cobra.io
+\f2\b0 \cf6 \strokec6  
+\f3\b \cf5 \strokec5 import
+\f2\b0 \cf6 \strokec6  load_json_model_model, save_json_model, load_matlab_model, save_matlab_model, read_sbml_model, write_sbml_model\
+\
+compy_model = cobra.io.load_json_model(\'93path/to/your/compy/model\'94)\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 If you want to change the file type (from json to .mat, .xml, .pickle etc.) you can load in the .json model then save it as another file type (ex: 
+\f2 \cf6 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec6 cobra.io.save_matlab_model(\cf3 \outl0\strokewidth0 compy_model\cf6 \outl0\strokewidth0 \strokec6 , \cf3 \outl0\strokewidth0 \'93path/you/want/to/save/model\'94) )\cf6 \outl0\strokewidth0 \strokec6 \
+\
+
+\f1 \cf8 \strokec9 more details on reading and writing models found {\field{\*\fldinst{HYPERLINK "https://cobrapy.readthedocs.io/en/latest/io.html"}}{\fldrslt here}}.\
+
+\f2 \cf6 \strokec6 \
+\
+\
+\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b\fs32 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 Running FBA and Extracting Exchange Fluxes:\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f2\b0\fs24 \cf6 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec6 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1 \cf8 \outl0\strokewidth0 You can run FBA on the model (make sure the objective function is set to \'93communityBiomass\'94  before you do)\
+\pard\pardeftab720\partightenfactor0
+
+\f2 \cf6 \outl0\strokewidth0 \strokec6 solution \cf11 \strokec11 =\cf6 \strokec6  \cf3 \outl0\strokewidth0 compy_model\cf11 \outl0\strokewidth0 \strokec11 .\cf6 \strokec6 optimize()\
+fluxes = pd.DataFrame(\cf3 \outl0\strokewidth0 solution.fluxes\cf6 \outl0\strokewidth0 \strokec6 )\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1 \cf8 \outl0\strokewidth0 more details on running FBA (or parsimonious FBA, or FVA etc. can be found {\field{\*\fldinst{HYPERLINK "https://cobrapy.readthedocs.io/en/latest/simulating.html#"}}{\fldrslt here}}) 
+\f2 \cf6 \outl0\strokewidth0 \strokec6  \
+\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f1 \cf8 \strokec9 The exchange reactions are labelled \'93Microbe Id + _IEX\'94 in their reaction IDs, so you can subset the fluxes dataframe for reactions containing IEX to get just the exchange fluxes (and then you can trace the metabolite exchange to the specific species based on the microbe ID. This is similar to how Micom outputs their flux data. \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf8 \strokec9 \
+An example of how this IEX subsetted flux would look:
+\f2 \cf6 \strokec6 \
+\
+Anaerostipes_hadrus_DSM_3319_IEX_12dhchol[u]tr,0.0\
+Anaerostipes_hadrus_DSM_3319_IEX_26dap_M[u]tr,0.0\
+Anaerostipes_hadrus_DSM_3319_IEX_4abut[u]tr,-0.004355879017511126\
+Bifidobacterium_bifidum_S17_IEX_malttr[u]tr,0.0\
+Bifidobacterium_bifidum_S17_IEX_man[u]tr,1.1677671273551935\
+Bifidobacterium_bifidum_S17_IEX_mantr[u]tr,0.0\
+Bifidobacterium_bifidum_S17_IEX_melib[u]tr,0.0\
+Bifidobacterium_longum_E18_IEX_tsul[u]tr,0.0\
+Bifidobacterium_longum_E18_IEX_ttdca[u]tr,0.0\
+Bifidobacterium_longum_E18_IEX_turan_D[u]tr,0.0\
+Bifidobacterium_longum_E18_IEX_tyr_L[u]tr,0.0\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1 \cf8 \outl0\strokewidth0 We can see that all have the \'93IEX\'94 so they are all microbial exchange fluxes, and that there are 3 species in this flux output, 
+\f2 \cf3 Anaerostipes_hadrus_DSM_3319, Bifidobacterium_bifidum_S17 and Bifidobacterium_longum_E18\cf6 \outl0\strokewidth0 \strokec6 \
+\pard\pardeftab720\partightenfactor0
+\cf6 \
+}
